@@ -180,8 +180,9 @@ namespace diskann {
                            coord_cache_buf_len * sizeof(T), 8 * sizeof(T));
     memset(coord_cache_buf, 0, coord_cache_buf_len * sizeof(T));
 
-    size_t BLOCK_SIZE = 8;
+    size_t BLOCK_SIZE = 64;
     size_t num_blocks = DIV_ROUND_UP(num_cached_nodes, BLOCK_SIZE);
+    
     for (_u64 block = 0; block < num_blocks; block++) {
       _u64 start_idx = block * BLOCK_SIZE;
       _u64 end_idx = (std::min)(num_cached_nodes, (block + 1) * BLOCK_SIZE);
@@ -583,6 +584,7 @@ namespace diskann {
                      METADATA_SIZE);
 #endif
 
+    std::cout << pq_table_bin << std::endl;
     this->disk_index_file = disk_index_file;
 
     if (pq_file_num_centroids != 256) {
