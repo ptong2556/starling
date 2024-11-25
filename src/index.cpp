@@ -522,6 +522,7 @@ namespace diskann {
 #ifdef EXEC_ENV_OLS
     diskann::get_bin_metadata(reader, file_num_points, file_dim);
 #else
+    std::cout << filename << std::endl;
     if (!file_exists(filename)) {
       std::stringstream stream;
       stream << "ERROR: data file " << filename << " does not exist."
