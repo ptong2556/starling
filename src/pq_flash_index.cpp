@@ -158,6 +158,11 @@ namespace diskann {
     this->reader->deregister_all_threads();
   }
 
+  template <typename T> 
+  std::uint64_t PQFlashIndex<T>::get_num_points(){
+      return num_points;
+  }
+
   template<typename T>
   void PQFlashIndex<T>::load_cache_list(std::vector<uint32_t> &node_list) {
     diskann::cout << "Loading the cache list into memory.." << std::flush;
@@ -179,9 +184,10 @@ namespace diskann {
     diskann::alloc_aligned((void **) &coord_cache_buf,
                            coord_cache_buf_len * sizeof(T), 8 * sizeof(T));
     memset(coord_cache_buf, 0, coord_cache_buf_len * sizeof(T));
-
-    size_t BLOCK_SIZE = 8;
+    size_t BLOCK_SIZE = 64;
     size_t num_blocks = DIV_ROUND_UP(num_cached_nodes, BLOCK_SIZE);
+  
+    #pragma omp parallel for schedule(dynamic, 1)
     for (_u64 block = 0; block < num_blocks; block++) {
       _u64 start_idx = block * BLOCK_SIZE;
       _u64 end_idx = (std::min)(num_cached_nodes, (block + 1) * BLOCK_SIZE);
@@ -210,6 +216,7 @@ namespace diskann {
 
       _u64 node_idx = start_idx;
 
+      #pragma omp critical
       for (auto &nhood : nhoods) {
         char* node_buf = nullptr;
         if(use_page_search_){
@@ -583,6 +590,7 @@ namespace diskann {
                      METADATA_SIZE);
 #endif
 
+    std::cout << pq_table_bin << std::endl;
     this->disk_index_file = disk_index_file;
 
     if (pq_file_num_centroids != 256) {

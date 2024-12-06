@@ -10,6 +10,7 @@
 #include <string.h>
 #include <time.h>
 #include <boost/program_options.hpp>
+#include <numeric>
 
 #include "aux_utils.h"
 #include "index.h"
@@ -65,6 +66,7 @@ int search_disk_index(
     const bool use_page_search=true,
     const float use_ratio=1.0,
     const bool use_reorder_data = false,
+    const bool benchmark = false,
     const bool use_sq = false) {
   diskann::cout << "Search parameters: #threads: " << num_threads << ", ";
   if (beamwidth <= 0)
@@ -133,7 +135,16 @@ int search_disk_index(
   std::vector<uint32_t> node_list;
   diskann::cout << "Caching " << num_nodes_to_cache
                 << " BFS nodes around medoid(s)" << std::endl;
-  //_pFlashIndex->cache_bfs_levels(num_nodes_to_cache, node_list);
+  
+  if (num_nodes_to_cache == _pFlashIndex->get_num_points()) {
+      diskann::cout << "Caching all nodes" << std::endl;
+      node_list.resize(num_nodes_to_cache);
+      std::iota(node_list.begin(), node_list.end(), 0);
+  } else {
+      _pFlashIndex->cache_bfs_levels(num_nodes_to_cache, node_list);
+  }
+  
+  _pFlashIndex->cache_bfs_levels(num_nodes_to_cache, node_list);
   if (num_nodes_to_cache > 0){
     if(use_sq){
       std::cout << "not support sq cache, please use mem index" << std::endl;
@@ -242,10 +253,17 @@ int search_disk_index(
 
     // Using branching outside the for loop instead of inside and 
     // std::function/std::mem_fn for less switching and function calling overhead
+    int64_t end = query_num;
+    if (benchmark)
+      end = 1000000000000;
+
     if (use_page_search) {
       if(use_sq){
   #pragma omp parallel for schedule(dynamic, 1)
-        for (_s64 i = 0; i < (int64_t) query_num; i++) {
+
+        //for (_s64 i = 0; i < (int64_t) query_num; i++) {
+        for (_s64 j = 0; j < end; j++) {
+          _s64 i = j % query_num; 
           _pFlashIndex->page_search_sq(
               query + (i * query_aligned_dim), recall_at, mem_L, L,
               query_result_ids_64.data() + (i * recall_at),
@@ -253,8 +271,12 @@ int search_disk_index(
               optimized_beamwidth, search_io_limit, use_reorder_data, use_ratio, stats + i);
         }
       }else{
+        //std::cout << "Begin Search" << std::endl;
   #pragma omp parallel for schedule(dynamic, 1)
-        for (_s64 i = 0; i < (int64_t) query_num; i++) {
+        for (_s64 j = 0; j < end; j++) {
+        //for (_s64 j = 0; j < 1000000000000; j++){
+          _s64 i = j % query_num;
+          //std::cout << i << std::endl;
           _pFlashIndex->page_search(
               query + (i * query_aligned_dim), recall_at, mem_L, L,
               query_result_ids_64.data() + (i * recall_at),
@@ -267,8 +289,13 @@ int search_disk_index(
         std::cout << "diskann current not support sq..." << std::endl;
         exit(-1);
       }
+        
+      //std::cout << "Begin Search" << std::endl;
 #pragma omp parallel for schedule(dynamic, 1)
-      for (_s64 i = 0; i < (int64_t) query_num; i++) {
+      //for (_s64 i = 0; i < (int64_t) query_num; i++) {
+      for (_s64 j = 0; j < end; j++){
+        _s64 i = j % query_num;
+        //std::cout << i << std::endl;
         _pFlashIndex->cached_beam_search(
             query + (i * query_aligned_dim), recall_at, L,
             query_result_ids_64.data() + (i * recall_at),
@@ -349,7 +376,7 @@ int main(int argc, char** argv) {
   std::string data_type, dist_fn, index_path_prefix, result_path_prefix,
       query_file, gt_file, disk_file_path, mem_index_path;
   unsigned              num_threads, K, W, num_nodes_to_cache, search_io_limit;
-  unsigned              mem_L;
+  unsigned              mem_L, benchmark;
   std::vector<unsigned> Lvec;
   bool                  use_reorder_data = false;
   bool                  use_page_search = true;
@@ -414,6 +441,8 @@ int main(int argc, char** argv) {
                        "The path of the disk file (_disk.index in the original DiskANN)");
     desc.add_options()("mem_index_path", po::value<std::string>(&mem_index_path)->default_value(""),
                        "The prefix path of the mem_index");
+    desc.add_options()("benchmark", po::value<unsigned>(&benchmark)->default_value(0),
+                       "Use 1 for memory benchmark applications, 0 for normal recall applications");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -477,19 +506,19 @@ int main(int argc, char** argv) {
                                       result_path_prefix, query_file, gt_file,
                                       disk_file_path,
                                       num_threads, K, W, num_nodes_to_cache,
-                                      search_io_limit, Lvec, mem_L, use_page_search, use_ratio, use_reorder_data, use_sq);
+                                      search_io_limit, Lvec, mem_L, use_page_search, use_ratio, use_reorder_data, use_sq, benchmark);
     else if (data_type == std::string("int8"))
       return search_disk_index<int8_t>(metric, index_path_prefix,
                                        mem_index_path,
                                        result_path_prefix, query_file, gt_file,
                                        disk_file_path,
                                        num_threads, K, W, num_nodes_to_cache,
-                                       search_io_limit, Lvec, mem_L, use_page_search, use_ratio, use_reorder_data);
+                                       search_io_limit, Lvec, mem_L, use_page_search, use_ratio, use_reorder_data, benchmark);
     else if (data_type == std::string("uint8"))
       return search_disk_index<uint8_t>(
           metric, index_path_prefix, mem_index_path, result_path_prefix, query_file, gt_file,
           disk_file_path, num_threads, K, W, num_nodes_to_cache, search_io_limit, Lvec, mem_L,
-          use_page_search, use_ratio, use_reorder_data);
+          use_page_search, use_ratio, use_reorder_data, benchmark);
     else {
       std::cerr << "Unsupported data type. Use float or int8 or uint8"
                 << std::endl;
