@@ -1,3 +1,6 @@
+Fall 2024 Research under Yuhong Zhong, Dr. Asaf Cidon, Software Systems Lab
+
+Repository forked from:
 # Starling
 
 In this repository, we share the implementations and experiments of our work *Starling: An I/O-Efficient Disk-Resident Graph Index Framework for High-Dimensional Vector Similarity Search on Data Segment* ([arXiv](https://arxiv.org/abs/2401.02116)).
