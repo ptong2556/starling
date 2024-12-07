@@ -72,6 +72,11 @@ do
     do
         for CACHE in ${CACHE_L[@]}
         do
+            while [ ! -z "$(pgrep -nf search_disk_index)" ]; do
+                sudo kill $(pgrep -nf search_disk_index)
+                sleep 1
+            done
+
             SEARCH_LOG=${INDEX_PREFIX_PATH}search/search_SQ${USE_SQ}_K${K}_L${L}_CACHE${CACHE}_BW${BW}_T${T}_MEML${MEM_L}_MEMK${MEM_TOPK}_MEM_USE_FREQ${MEM_USE_FREQ}_PS${USE_PAGE_SEARCH}_USE_RATIO${PS_USE_RATIO}_GP_USE_FREQ{$GP_USE_FREQ}_GP_LOCK_NUMS${GP_LOCK_NUMS}_GP_CUT${GP_CUT}.log
             echo "Searching... log file: ${SEARCH_LOG}"
             sync; echo 3 | sudo tee /proc/sys/vm/drop_caches; nohup ${EXE_PATH}/tests/search_disk_index --data_type $DATA_TYPE \
@@ -116,10 +121,13 @@ do
             sudo ./AMDuProfPcm -m memory -a -d 10 -o ${MEMORY_LOG};
             
             echo "Beginning CPU Utilization Analysis";
-            samples=5;
-            output_file=/users/patrickt/mnt/sdb/starling/memory_bandwidth/cpu_results/${L}_${MEM_L}_${CACHE}_results.csv;
+            samples=20;
+            output_file=/users/patrickt/mnt/sdb/starling/memory_bandwidth/cpu_results/${L}_${MEM_L}_${CACHE}_${T}_results.csv;
+            #echo $output_file
             for ((i=1; i<=samples; i++)); do
                 timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+                sudo top -bn1 | grep "search_" >> "$output_file"
+                sudo top -bn1 | grep "Cpu(s)" >> "$output_file"
                 sudo ps -eo pid,pcpu,comm | grep "search_disk" | grep -v "grep" | awk -v ts="$timestamp" '{print ts","$1","$2","$3}' >> "$output_file"
                 sleep 10
             done
