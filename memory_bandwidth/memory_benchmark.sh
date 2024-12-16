@@ -27,7 +27,7 @@ MEM_R=64
 MEM_BUILD_L=100
 MEM_ALPHA=1.2
 MEM_USE_FREQ=0
-MEM_RAND_SAMPLING_RATE=0.01
+MEM_RAND_SAMPLING_RATE=0.1
 MEM_FREQ_USE_RATE=0.01
 INDEX_PREFIX_PATH="${PREFIX}_M${M}_R${R}_L${BUILD_L}_B${B}/"
 MEM_INDEX_PATH="${INDEX_PREFIX_PATH}MEM_R_${MEM_R}_L_${MEM_BUILD_L}_ALPHA_${MEM_ALPHA}_MEM_USE_FREQ${MEM_USE_FREQ}_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}_FREQ_RATE${MEM_FREQ_USE_RATE}/"
@@ -38,10 +38,10 @@ MEM_LS=(0 1)
 K=10
 
 sudo modprobe amd_uncore
-mkdir -p ${INDEX_PREFIX_PATH}/search
-mkdir -p ${INDEX_PREFIX_PATH}/result
-mkdir amd_results
-mkdir cpu_results
+mkdir -p ${INDEX_PREFIX_PATH}/search_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}
+mkdir -p ${INDEX_PREFIX_PATH}/result_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}
+mkdir amd_results_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}
+mkdir cpu_results_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}
 if [ ! -d "$INDEX_PREFIX_PATH" ]; then
     echo "Directory $INDEX_PREFIX_PATH is not exist. Build it first?"
     exit 1
@@ -77,7 +77,7 @@ do
                 sleep 1
             done
 
-            SEARCH_LOG=${INDEX_PREFIX_PATH}search/search_SQ${USE_SQ}_K${K}_L${L}_CACHE${CACHE}_BW${BW}_T${T}_MEML${MEM_L}_MEMK${MEM_TOPK}_MEM_USE_FREQ${MEM_USE_FREQ}_PS${USE_PAGE_SEARCH}_USE_RATIO${PS_USE_RATIO}_GP_USE_FREQ{$GP_USE_FREQ}_GP_LOCK_NUMS${GP_LOCK_NUMS}_GP_CUT${GP_CUT}.log
+            SEARCH_LOG=${INDEX_PREFIX_PATH}search_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}/search_SQ${USE_SQ}_K${K}_L${L}_CACHE${CACHE}_BW${BW}_T${T}_MEML${MEM_L}_MEMK${MEM_TOPK}_MEM_USE_FREQ${MEM_USE_FREQ}_PS${USE_PAGE_SEARCH}_USE_RATIO${PS_USE_RATIO}_GP_USE_FREQ{$GP_USE_FREQ}_GP_LOCK_NUMS${GP_LOCK_NUMS}_GP_CUT${GP_CUT}.log
             echo "Searching... log file: ${SEARCH_LOG}"
             sync; echo 3 | sudo tee /proc/sys/vm/drop_caches; nohup ${EXE_PATH}/tests/search_disk_index --data_type $DATA_TYPE \
                 --dist_fn $DIST_FN \
@@ -85,7 +85,7 @@ do
                 --query_file $QUERY_FILE \
                 --gt_file $GT_FILE \
                 -K $K \
-                --result_path ${INDEX_PREFIX_PATH}result/result \
+                --result_path ${INDEX_PREFIX_PATH}result_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}/result \
                 --num_nodes_to_cache $CACHE \
                 -T $T \
                 -L $L \
@@ -117,18 +117,18 @@ do
             sleep 30;
             echo "Beginning Memory Analysis";
             cd /opt/AMDuProf_5.0-1479/bin;
-            MEMORY_LOG=/users/patrickt/mnt/sdb/starling/memory_bandwidth/amd_results/${L}_${MEM_L}_${CACHE}_results.csv;
+            MEMORY_LOG=/users/patrickt/mnt/sdb/starling/memory_bandwidth/amd_results_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}/${L}_${MEM_L}_${CACHE}_results.csv;
             sudo ./AMDuProfPcm -m memory -a -d 10 -o ${MEMORY_LOG};
             
             echo "Beginning CPU Utilization Analysis";
             samples=20;
-            output_file=/users/patrickt/mnt/sdb/starling/memory_bandwidth/cpu_results/${L}_${MEM_L}_${CACHE}_${T}_results.csv;
+            output_file=/users/patrickt/mnt/sdb/starling/memory_bandwidth/cpu_results_RANDOM_RATE${MEM_RAND_SAMPLING_RATE}/${L}_${MEM_L}_${CACHE}_${T}_results.csv;
             #echo $output_file
             for ((i=1; i<=samples; i++)); do
                 timestamp=$(date "+%Y-%m-%d %H:%M:%S")
                 sudo top -bn1 | grep "search_" >> "$output_file"
-                sudo top -bn1 | grep "Cpu(s)" >> "$output_file"
-                sudo ps -eo pid,pcpu,comm | grep "search_disk" | grep -v "grep" | awk -v ts="$timestamp" '{print ts","$1","$2","$3}' >> "$output_file"
+                #sudo top -bn1 | grep "Cpu(s)" >> "$output_file"
+                #sudo ps -eo pid,pcpu,comm | grep "search_disk" | grep -v "grep" | awk -v ts="$timestamp" '{print ts","$1","$2","$3}' >> "$output_file"
                 sleep 10
             done
             
