@@ -10,3 +10,22 @@
 *.png binary
 *.jpg binary
 *.index filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_sample_data.bin filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/SAMPLE_RATE_0.1 filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/search_RANDOM_RATE0.01 filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_partition.bin filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_pq_compressed.bin filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_pq_pivots.bin filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/GP_TIMES_16_LOCK_0_GP_USE_FREQ0_CUT4096 filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_mem.index.data filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/result_RANDOM_RATE0.1 filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/build.log filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_disk_beam_search.index filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_disk.index filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/search filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/search_RANDOM_RATE0.1 filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/MEM_R_64_L_100_ALPHA_1.2_MEM_USE_FREQ0_RANDOM_RATE0.1_FREQ_RATE0.01 filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/recall filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/_sample_ids.bin filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/result filter=lfs diff=lfs merge=lfs -text
+test_disk_index/spaceV1B_M100_R64_L100_B3.25/result_RANDOM_RATE0.01 filter=lfs diff=lfs merge=lfs -text
